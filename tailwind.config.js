@@ -18,6 +18,7 @@ const config = {
         grotesk: ["var(--font-space-grotesk)", "sans-serif"],
         inter: ["var(--font-inter)", "sans-serif"],
         mono: ["var(--font-fira-code)", "monospace"],
+        playfair: ["var(--font-playfair)", "serif"],
       },
     },
   },

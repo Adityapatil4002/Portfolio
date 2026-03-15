@@ -1,4 +1,9 @@
-import { Space_Grotesk, Inter, Fira_Code } from "next/font/google";
+import {
+  Space_Grotesk,
+  Inter,
+  Fira_Code,
+  Playfair_Display,
+} from "next/font/google";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -19,6 +24,14 @@ const firaCode = Fira_Code({
   display: "swap",
 });
 
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
+
 export const metadata = {
   title: "Aditya Patil | Software Engineer & AI Enthusiast",
   description:
@@ -29,7 +42,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${firaCode.variable}`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${firaCode.variable} ${playfair.variable}`}
     >
       <body className="font-inter antialiased">{children}</body>
     </html>
