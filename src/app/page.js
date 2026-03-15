@@ -130,7 +130,7 @@ const projectsData = [
     ],
     github: "https://github.com/Adityapatil4002/DevDialogue",
     live: "https://dev-dialogue.vercel.app/",
-    gradient: "from-violet-600/30 via-purple-600/20 to-indigo-600/30",
+    gradient: "from-violet-600/20 via-purple-600/10 to-indigo-600/20",
     accent: "#8B5CF6",
   },
   {
@@ -154,7 +154,7 @@ const projectsData = [
       "Jupyter",
     ],
     github: "https://github.com/Adityapatil4002/Vehicle-Price-Regression",
-    gradient: "from-emerald-600/30 via-teal-600/20 to-cyan-600/30",
+    gradient: "from-emerald-600/20 via-teal-600/10 to-cyan-600/20",
     accent: "#10B981",
   },
 ];
@@ -202,7 +202,6 @@ const navItems = [
 function useInView(threshold = 0.1) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -218,7 +217,6 @@ function useInView(threshold = 0.1) {
     obs.observe(el);
     return () => obs.unobserve(el);
   }, [threshold]);
-
   return { ref, visible };
 }
 
@@ -229,20 +227,17 @@ function useInView(threshold = 0.1) {
 function NeuralNetworkBg() {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
-  const nodesRef = useRef([]);
   const mouseRef = useRef({ x: -1000, y: -1000 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-
     let width = window.innerWidth;
     let height = window.innerHeight;
     canvas.width = width;
     canvas.height = height;
 
-    // Create nodes
     const nodeCount = Math.min(Math.floor((width * height) / 18000), 80);
     const nodes = [];
     for (let i = 0; i < nodeCount; i++) {
@@ -256,116 +251,83 @@ function NeuralNetworkBg() {
         pulseOffset: Math.random() * Math.PI * 2,
       });
     }
-    nodesRef.current = nodes;
 
-    const connectionDist = 180;
-    const mouseDist = 200;
+    const connDist = 180;
+    let time = 0;
 
     const handleMouse = (e) => {
       mouseRef.current = { x: e.clientX, y: e.clientY };
     };
-    window.addEventListener("mousemove", handleMouse);
-
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
       canvas.width = width;
       canvas.height = height;
     };
+    window.addEventListener("mousemove", handleMouse);
     window.addEventListener("resize", handleResize);
-
-    let time = 0;
 
     const draw = () => {
       time += 0.01;
       ctx.clearRect(0, 0, width, height);
 
-      // Update node positions
       for (const node of nodes) {
         node.x += node.vx;
         node.y += node.vy;
-
-        // Bounce off edges
         if (node.x < 0 || node.x > width) node.vx *= -1;
         if (node.y < 0 || node.y > height) node.vy *= -1;
-
         node.x = Math.max(0, Math.min(width, node.x));
         node.y = Math.max(0, Math.min(height, node.y));
-
-        // Pulse effect
         node.radius =
           node.baseRadius + Math.sin(time * 2 + node.pulseOffset) * 0.5;
 
-        // Mouse repulsion
         const dx = node.x - mouseRef.current.x;
         const dy = node.y - mouseRef.current.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < mouseDist && dist > 0) {
-          const force = (mouseDist - dist) / mouseDist;
+        if (dist < 200 && dist > 0) {
+          const force = (200 - dist) / 200;
           node.vx += (dx / dist) * force * 0.08;
           node.vy += (dy / dist) * force * 0.08;
         }
-
-        // Speed limit
         const speed = Math.sqrt(node.vx * node.vx + node.vy * node.vy);
         if (speed > 1) {
           node.vx = (node.vx / speed) * 1;
           node.vy = (node.vy / speed) * 1;
         }
-
-        // Friction
         node.vx *= 0.999;
         node.vy *= 0.999;
       }
 
-      // Draw connections
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
           const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < connectionDist) {
-            const opacity = (1 - dist / connectionDist) * 0.15;
-
-            // Check if near mouse for highlight
+          if (dist < connDist) {
+            const opacity = (1 - dist / connDist) * 0.15;
             const midX = (nodes[i].x + nodes[j].x) / 2;
             const midY = (nodes[i].y + nodes[j].y) / 2;
-            const mouseDx = midX - mouseRef.current.x;
-            const mouseDy = midY - mouseRef.current.y;
-            const mouseDist2 = Math.sqrt(mouseDx * mouseDx + mouseDy * mouseDy);
-            const mouseInfluence = mouseDist2 < 200 ? 1.5 : 1;
-
+            const mDx = midX - mouseRef.current.x;
+            const mDy = midY - mouseRef.current.y;
+            const mDist = Math.sqrt(mDx * mDx + mDy * mDy);
+            const mInf = mDist < 200 ? 1.5 : 1;
             ctx.beginPath();
             ctx.moveTo(nodes[i].x, nodes[i].y);
             ctx.lineTo(nodes[j].x, nodes[j].y);
-            ctx.strokeStyle = `rgba(139, 92, 246, ${opacity * mouseInfluence})`;
-            ctx.lineWidth = 0.5 + (1 - dist / connectionDist) * 0.5;
+            ctx.strokeStyle = `rgba(139, 92, 246, ${opacity * mInf})`;
+            ctx.lineWidth = 0.5 + (1 - dist / connDist) * 0.5;
             ctx.stroke();
-
-            // Data pulse traveling along connections
-            if (Math.random() < 0.001) {
-              const pulsePos = (time * 50) % 1;
-              const px = nodes[i].x + (nodes[j].x - nodes[i].x) * pulsePos;
-              const py = nodes[i].y + (nodes[j].y - nodes[i].y) * pulsePos;
-              ctx.beginPath();
-              ctx.arc(px, py, 2, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(167, 139, 250, 0.6)`;
-              ctx.fill();
-            }
           }
         }
       }
 
-      // Draw nodes
       for (const node of nodes) {
         const dx = node.x - mouseRef.current.x;
         const dy = node.y - mouseRef.current.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        const isNearMouse = dist < 200;
+        const near = dist < 200;
 
-        // Node glow
-        if (isNearMouse) {
+        if (near) {
           ctx.beginPath();
           ctx.arc(node.x, node.y, node.radius * 4, 0, Math.PI * 2);
           const glow = ctx.createRadialGradient(
@@ -382,16 +344,15 @@ function NeuralNetworkBg() {
           ctx.fill();
         }
 
-        // Node circle
         ctx.beginPath();
         ctx.arc(
           node.x,
           node.y,
-          isNearMouse ? node.radius * 1.5 : node.radius,
+          near ? node.radius * 1.5 : node.radius,
           0,
           Math.PI * 2,
         );
-        ctx.fillStyle = isNearMouse
+        ctx.fillStyle = near
           ? "rgba(167, 139, 250, 0.8)"
           : "rgba(139, 92, 246, 0.4)";
         ctx.fill();
@@ -401,7 +362,6 @@ function NeuralNetworkBg() {
     };
 
     draw();
-
     return () => {
       cancelAnimationFrame(animRef.current);
       window.removeEventListener("mousemove", handleMouse);
@@ -418,11 +378,490 @@ function NeuralNetworkBg() {
 }
 
 /* ════════════════════════════════════════════
+   DEVDIALOGUE LIVE ANIMATION
+   ════════════════════════════════════════════ */
+
+function DevDialogueAnimation() {
+  const [phase, setPhase] = useState(0);
+  const [cycle, setCycle] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase((p) => {
+        if (p >= 7) {
+          setCycle((c) => c + 1);
+          return 0;
+        }
+        return p + 1;
+      });
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
+  const chatMessages = [
+    {
+      user: "Aditya",
+      avatar: "AP",
+      text: "Let's build the auth module 🔥",
+      side: "right",
+      showAt: 0,
+    },
+    {
+      user: "Sarah",
+      avatar: "SK",
+      text: "On it! Setting up React components",
+      side: "left",
+      showAt: 1,
+    },
+    {
+      user: "Aditya",
+      avatar: "AP",
+      text: "@AI fix the login bug in auth.js",
+      side: "right",
+      showAt: 2,
+    },
+  ];
+
+  return (
+    <div className="h-full flex flex-col p-3 lg:p-4 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2 bg-black/50 rounded-lg backdrop-blur-sm border border-white/5 mb-3 shrink-0">
+        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        <span className="text-[0.65rem] text-white/60 font-mono font-medium">
+          DevDialogue
+        </span>
+        <div className="ml-auto flex -space-x-1.5">
+          <div className="w-4 h-4 rounded-full bg-violet/40 border border-black text-[0.35rem] flex items-center justify-center text-white/80">
+            A
+          </div>
+          <div className="w-4 h-4 rounded-full bg-blue-500/40 border border-black text-[0.35rem] flex items-center justify-center text-white/80">
+            S
+          </div>
+          <div className="w-4 h-4 rounded-full bg-emerald-500/40 border border-black text-[0.35rem] flex items-center justify-center text-white/80">
+            R
+          </div>
+        </div>
+        <span className="text-[0.5rem] text-green-400/60">3 online</span>
+      </div>
+
+      {/* Chat messages */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={cycle}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex-1 flex flex-col gap-2 overflow-hidden"
+        >
+          {chatMessages.map(
+            (msg, i) =>
+              phase >= msg.showAt && (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 12, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className={`flex ${msg.side === "right" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[85%] px-3 py-2 text-[0.6rem] lg:text-[0.65rem] leading-relaxed ${
+                      msg.side === "right"
+                        ? "bg-violet/15 border border-violet/20 text-white/80 rounded-2xl rounded-br-md"
+                        : "bg-white/[0.04] border border-white/[0.06] text-white/70 rounded-2xl rounded-bl-md"
+                    }`}
+                  >
+                    <span
+                      className={`text-[0.5rem] font-semibold block mb-0.5 ${msg.side === "right" ? "text-violet-light/70" : "text-blue-400/70"}`}
+                    >
+                      {msg.user}
+                    </span>
+                    {msg.text}
+                  </div>
+                </motion.div>
+              ),
+          )}
+
+          {/* AI typing indicator */}
+          {phase === 3 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-start"
+            >
+              <div className="bg-violet/10 border border-violet/25 rounded-2xl rounded-bl-md px-3 py-2.5 max-w-[80%]">
+                <span className="text-[0.5rem] text-violet font-semibold block mb-1">
+                  🤖 DevAI
+                </span>
+                <div className="flex gap-1.5 items-center h-3">
+                  {[0, 1, 2].map((d) => (
+                    <motion.div
+                      key={d}
+                      animate={{ y: [0, -4, 0] }}
+                      transition={{
+                        duration: 0.6,
+                        repeat: Infinity,
+                        delay: d * 0.15,
+                      }}
+                      className="w-1.5 h-1.5 bg-violet rounded-full"
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* AI response */}
+          {phase >= 4 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex justify-start"
+            >
+              <div className="bg-violet/10 border border-violet/25 rounded-2xl rounded-bl-md px-3 py-2 max-w-[90%]">
+                <span className="text-[0.5rem] text-violet font-semibold block mb-1">
+                  🤖 DevAI
+                </span>
+                <span className="text-[0.6rem] lg:text-[0.65rem] text-white/80 leading-relaxed">
+                  Found <span className="text-red-400">null check error</span>{" "}
+                  on line 42. Patching now...{" "}
+                  <span className="text-green-400">✅</span>
+                </span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* File created */}
+          {phase >= 5 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="bg-black/60 border border-white/[0.08] rounded-xl px-3 py-2.5">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#FF5F57]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#FFBD2E]" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#28CA41]" />
+                  </div>
+                  <span className="text-[0.5rem] text-green-400 font-mono">
+                    📄 auth.js
+                  </span>
+                  <span className="text-[0.45rem] text-white/25 ml-auto">
+                    created
+                  </span>
+                </div>
+                <div className="font-mono text-[0.5rem] lg:text-[0.55rem] space-y-0.5">
+                  <div>
+                    <span className="text-gray-500">1 </span>
+                    <span className="text-violet-light">const</span>{" "}
+                    <span className="text-blue-400">auth</span>{" "}
+                    <span className="text-white/50">=</span>{" "}
+                    <span className="text-green-400">require</span>
+                    <span className="text-white/30">(</span>
+                    <span className="text-orange-300">
+                      &apos;./config&apos;
+                    </span>
+                    <span className="text-white/30">);</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">2 </span>
+                    <span className="text-violet-light">if</span>{" "}
+                    <span className="text-white/30">(</span>
+                    <span className="text-blue-400">user</span>{" "}
+                    <span className="text-orange-300">!==</span>{" "}
+                    <span className="text-violet-light">null</span>
+                    <span className="text-white/30">) {"{"}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">3 </span>
+                    {"  "}
+                    <span className="text-blue-400">validateToken</span>
+                    <span className="text-white/30">(</span>
+                    <span className="text-blue-400">user</span>
+                    <span className="text-white/30">);</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Terminal */}
+          {phase >= 6 && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="bg-black/70 border border-white/[0.08] rounded-xl px-3 py-2">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[0.5rem] text-white/30">⬤</span>
+                  <span className="text-[0.5rem] text-white/40 font-mono">
+                    Terminal
+                  </span>
+                </div>
+                <div className="font-mono text-[0.5rem] lg:text-[0.55rem] space-y-0.5">
+                  <div className="text-gray-400">$ npm run dev</div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-green-400"
+                  >
+                    ✓ Compiled successfully
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                    className="text-green-400"
+                  >
+                    ✓ Server running on localhost:3000
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
+   ML PIPELINE ANIMATION
+   ════════════════════════════════════════════ */
+
+function MLPipelineAnimation() {
+  const [phase, setPhase] = useState(0);
+  const [cycle, setCycle] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase((p) => {
+        if (p >= 5) {
+          setCycle((c) => c + 1);
+          return 0;
+        }
+        return p + 1;
+      });
+    }, 2200);
+    return () => clearInterval(interval);
+  }, []);
+
+  const dataRows = [
+    { id: "001", year: "2012", price: "$42,500", hrs: "3,200" },
+    { id: "002", year: "2015", price: "$38,900", hrs: "1,800" },
+    { id: "003", year: "2018", price: "$55,200", hrs: "950" },
+    { id: "004", year: "2020", price: "$61,000", hrs: "420" },
+  ];
+
+  const chartBars = [35, 58, 42, 75, 52, 68, 85, 45, 72, 90];
+
+  return (
+    <div className="h-full flex flex-col p-3 lg:p-4 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2 bg-black/50 rounded-lg backdrop-blur-sm border border-white/5 mb-3 shrink-0">
+        <span className="text-[0.65rem] text-white/60 font-mono font-medium">
+          📊 ML Pipeline
+        </span>
+        <div className="ml-auto flex items-center gap-1.5">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[0.5rem] text-emerald-400/70">Running</span>
+        </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={cycle}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex-1 flex flex-col gap-2.5 overflow-hidden"
+        >
+          {/* Data loading */}
+          {phase >= 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="bg-black/50 rounded-xl px-3 py-2.5 border border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[0.5rem] text-white/40 font-mono">
+                    Dataset Preview
+                  </span>
+                  <span className="text-[0.45rem] text-emerald-400/60">
+                    412,698 records
+                  </span>
+                </div>
+
+                {/* Table header */}
+                <div className="flex justify-between text-[0.45rem] text-white/25 font-mono border-b border-white/5 pb-1 mb-1">
+                  <span className="w-8">ID</span>
+                  <span className="w-10">Year</span>
+                  <span className="w-14 text-right">Price</span>
+                  <span className="w-12 text-right">Hours</span>
+                </div>
+
+                {/* Data rows */}
+                {dataRows.map((row, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.2, duration: 0.3 }}
+                    className="flex justify-between text-[0.5rem] font-mono text-white/50 py-0.5 border-b border-white/[0.03]"
+                  >
+                    <span className="w-8 text-white/20">{row.id}</span>
+                    <span className="w-10">{row.year}</span>
+                    <span className="w-14 text-right text-emerald-400/80">
+                      {row.price}
+                    </span>
+                    <span className="w-12 text-right text-white/35">
+                      {row.hrs}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Training progress */}
+          {phase >= 2 && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="bg-black/50 rounded-xl px-3 py-2.5 border border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[0.5rem] text-white/40 font-mono">
+                    Training RandomForest...
+                  </span>
+                  <motion.span
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="text-[0.45rem] text-yellow-400/70"
+                  >
+                    ● Processing
+                  </motion.span>
+                </div>
+                <div className="w-full h-2 bg-white/[0.04] rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 3, ease: "easeInOut" }}
+                    className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full"
+                    style={{
+                      boxShadow: "0 0 10px rgba(16, 185, 129, 0.3)",
+                    }}
+                  />
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[0.4rem] text-white/20 font-mono">
+                    Epoch 1/100
+                  </span>
+                  <span className="text-[0.4rem] text-white/20 font-mono">
+                    n_estimators=100
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Visualization */}
+          {phase >= 3 && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="bg-black/50 rounded-xl px-3 py-2.5 border border-white/5">
+                <span className="text-[0.5rem] text-white/40 font-mono mb-2 block">
+                  Price Prediction Distribution
+                </span>
+                <div className="flex items-end gap-[3px] h-[50px] lg:h-[60px]">
+                  {chartBars.map((h, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      transition={{
+                        duration: 0.6,
+                        delay: i * 0.08,
+                        ease: "easeOut",
+                      }}
+                      className="flex-1 rounded-t-sm bg-gradient-to-t from-emerald-600/80 to-emerald-400/60"
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="text-[0.4rem] text-white/15 font-mono">
+                    $10K
+                  </span>
+                  <span className="text-[0.4rem] text-white/15 font-mono">
+                    $90K
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Results */}
+          {phase >= 4 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              <div className="bg-emerald-500/[0.08] border border-emerald-500/20 rounded-xl px-3 py-2.5">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-green-400 text-[0.6rem]">✓</span>
+                  <span className="text-[0.55rem] text-emerald-400 font-semibold">
+                    Model Trained Successfully
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: "RMSLE", value: "0.2456" },
+                    { label: "R² Score", value: "0.891" },
+                    { label: "MAE", value: "$4,230" },
+                  ].map((metric, i) => (
+                    <motion.div
+                      key={metric.label}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.15 }}
+                      className="text-center"
+                    >
+                      <span className="text-[0.4rem] text-white/30 block">
+                        {metric.label}
+                      </span>
+                      <span className="text-[0.65rem] text-white/80 font-mono font-semibold">
+                        {metric.value}
+                      </span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════
    MAIN PAGE
    ════════════════════════════════════════════ */
 
 export default function Home() {
-  const [introPhase, setIntroPhase] = useState("typing");
+  const [introVisible, setIntroVisible] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -430,7 +869,6 @@ export default function Home() {
   const [countersStarted, setCountersStarted] = useState(false);
   const [counts, setCounts] = useState([0, 0, 0]);
   const [isTouch, setIsTouch] = useState(false);
-  const [helloOpacity, setHelloOpacity] = useState(0);
 
   const heroRef = useRef(null);
 
@@ -446,41 +884,25 @@ export default function Home() {
     [],
   );
 
-  // Detect touch
   useEffect(() => {
     setIsTouch("ontouchstart" in window);
   }, []);
 
-  // Intro: smooth fade in of "Hello" then fade out
+  // Intro: appear from bottom, then disappear
   useEffect(() => {
     document.body.style.overflow = "hidden";
-
-    // Phase 1: Fade in Hello smoothly
-    const fadeInTimer = setTimeout(() => {
-      setHelloOpacity(1);
-    }, 300);
-
-    // Phase 2: Hold it visible
-    const holdTimer = setTimeout(() => {
-      setIntroPhase("visible");
-    }, 2200);
-
-    // Phase 3: Fade out and remove
-    const fadeOutTimer = setTimeout(() => {
-      setIntroPhase("done");
+    const timer = setTimeout(() => {
+      setIntroVisible(false);
       document.body.style.overflow = "";
-    }, 3500);
-
+    }, 2600);
     return () => {
-      clearTimeout(fadeInTimer);
-      clearTimeout(holdTimer);
-      clearTimeout(fadeOutTimer);
+      clearTimeout(timer);
       document.body.style.overflow = "";
     };
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowCode(true), 4200);
+    const t = setTimeout(() => setShowCode(true), 3500);
     return () => clearTimeout(t);
   }, []);
 
@@ -527,19 +949,6 @@ export default function Home() {
     setMobileNav(false);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const handleTilt = useCallback((e) => {
-    const el = e.currentTarget;
-    const r = el.getBoundingClientRect();
-    const rx = (e.clientY - r.top - r.height / 2) / 20;
-    const ry = (r.width / 2 - (e.clientX - r.left)) / 20;
-    el.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-12px)`;
-  }, []);
-
-  const resetTilt = useCallback((e) => {
-    e.currentTarget.style.transform =
-      "perspective(1000px) rotateX(0) rotateY(0) translateY(0)";
-  }, []);
 
   const codeLines = [
     {
@@ -592,9 +1001,8 @@ export default function Home() {
       c: (
         <>
           &nbsp;&nbsp;&nbsp;&nbsp;
-          <span className="text-green-400">
-            &quot;Full Stack Dev&quot;
-          </span>, <span className="text-green-400">&quot;DSA&quot;</span>,
+          <span className="text-green-400">&quot;Full Stack&quot;</span>,{" "}
+          <span className="text-green-400">&quot;DSA&quot;</span>,
         </>
       ),
       d: 1.0,
@@ -667,31 +1075,31 @@ export default function Home() {
         />
       )}
 
-      {/* ══════ INTRO — ONLY "Hello" ══════ */}
+      {/* ══════ INTRO — "Hello" from bottom ══════ */}
       <AnimatePresence>
-        {introPhase !== "done" && (
+        {introVisible && (
           <motion.div
-            exit={{ opacity: 0, scale: 1.05, filter: "blur(30px)" }}
-            transition={{ duration: 1.2, ease: [0.645, 0.045, 0.355, 1] }}
+            exit={{ opacity: 0, filter: "blur(20px)" }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
             className="fixed inset-0 z-[10000] flex items-center justify-center bg-black"
           >
-            {/* Subtle bg ambiance */}
             <div
               className="absolute w-[500px] h-[500px] bg-violet rounded-full blur-[200px] opacity-[0.06] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
               style={{ animation: "pulseGlow 4s ease-in-out infinite" }}
             />
 
-            {/* Just "Hello" — smooth fade in with elegant font */}
-            <h1
-              className="font-playfair italic text-[clamp(5rem,16vw,14rem)] font-bold bg-gradient-to-r from-white via-violet-light to-violet bg-clip-text text-transparent select-none transition-all duration-[2000ms] ease-out"
-              style={{
-                opacity: helloOpacity,
-                transform: `translateY(${helloOpacity === 0 ? "30px" : "0"}) scale(${helloOpacity === 0 ? 0.9 : 1})`,
-                letterSpacing: "-0.02em",
+            <motion.h1
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: 1,
+                ease: [0.22, 1, 0.36, 1],
               }}
+              className="font-playfair italic text-[clamp(5rem,16vw,14rem)] font-bold bg-gradient-to-r from-white via-violet-light to-violet bg-clip-text text-transparent select-none"
+              style={{ letterSpacing: "-0.02em" }}
             >
               Hello
-            </h1>
+            </motion.h1>
           </motion.div>
         )}
       </AnimatePresence>
@@ -699,14 +1107,14 @@ export default function Home() {
       {/* ══════ MAIN ══════ */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={introPhase === "done" ? { opacity: 1 } : {}}
-        transition={{ duration: 1 }}
+        animate={!introVisible ? { opacity: 1 } : {}}
+        transition={{ duration: 0.8 }}
       >
         {/* NAV */}
         <motion.nav
           initial={{ y: -100 }}
-          animate={introPhase === "done" ? { y: 0 } : {}}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          animate={!introVisible ? { y: 0 } : {}}
+          transition={{ duration: 0.8, delay: 0.2 }}
           className={`fixed top-0 left-0 w-full z-[1000] px-6 md:px-10 flex justify-between items-center transition-all duration-300 ${
             scrolled
               ? "py-4 bg-black/85 backdrop-blur-xl border-b border-white/[0.06]"
@@ -719,7 +1127,6 @@ export default function Home() {
           >
             A<span className="text-violet">.</span>P
           </button>
-
           <ul className="hidden md:flex gap-8 list-none">
             {navItems.map((item) => (
               <li key={item}>
@@ -733,7 +1140,6 @@ export default function Home() {
               </li>
             ))}
           </ul>
-
           <button
             className="md:hidden flex flex-col gap-[5px] bg-transparent border-none cursor-pointer z-[1001]"
             onClick={() => setMobileNav(!mobileNav)}
@@ -751,7 +1157,6 @@ export default function Home() {
               className="w-[25px] h-[2px] bg-white block"
             />
           </button>
-
           <AnimatePresence>
             {mobileNav && (
               <motion.div
@@ -784,10 +1189,8 @@ export default function Home() {
           ref={heroRef}
           className="min-h-screen flex items-center relative overflow-hidden pt-[120px] pb-20 px-6 md:px-10"
         >
-          {/* NEURAL NETWORK BACKGROUND */}
           <NeuralNetworkBg />
 
-          {/* Gradient orbs on top of neural net */}
           <div
             className="absolute w-[600px] h-[600px] bg-violet rounded-full blur-[150px] opacity-[0.08] -top-[200px] -right-[100px]"
             style={{ animation: "orbFloat 18s ease-in-out infinite" }}
@@ -797,7 +1200,6 @@ export default function Home() {
             style={{ animation: "orbFloat 18s ease-in-out infinite 6s" }}
           />
 
-          {/* Subtle floating particles */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {particles.map((p) => (
               <div
@@ -813,15 +1215,14 @@ export default function Home() {
             ))}
           </div>
 
-          {/* HERO CONTENT */}
           <div className="max-w-[1400px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-[2]">
             {/* LEFT */}
             <motion.div
               initial={{ opacity: 0, x: -60 }}
-              animate={introPhase === "done" ? { opacity: 1, x: 0 } : {}}
+              animate={!introVisible ? { opacity: 1, x: 0 } : {}}
               transition={{
                 duration: 1,
-                delay: 0.3,
+                delay: 0.2,
                 ease: [0.34, 1.56, 0.64, 1],
               }}
             >
@@ -895,13 +1296,13 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* RIGHT — slightly smaller code block */}
+            {/* RIGHT - code block */}
             <motion.div
               initial={{ opacity: 0, x: 60 }}
-              animate={introPhase === "done" ? { opacity: 1, x: 0 } : {}}
+              animate={!introVisible ? { opacity: 1, x: 0 } : {}}
               transition={{
                 duration: 1,
-                delay: 0.6,
+                delay: 0.5,
                 ease: [0.34, 1.56, 0.64, 1],
               }}
               className="hidden lg:flex justify-center items-center"
@@ -918,7 +1319,6 @@ export default function Home() {
                     }}
                   />
                 ))}
-
                 <div
                   className="absolute w-[300px] h-[300px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
                   style={{ animation: "rotateOrbit 12s linear infinite" }}
@@ -980,7 +1380,6 @@ export default function Home() {
               hl="Tech Stack"
               sub="Technologies and tools I use to bring ideas to life."
             />
-
             <div className="overflow-hidden mb-10 py-5">
               <div
                 className="flex gap-5 w-max"
@@ -1002,7 +1401,6 @@ export default function Home() {
                 ))}
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
               {skillCategories.map((cat, idx) => (
                 <SkillCard key={cat.title} cat={cat} idx={idx} />
@@ -1038,7 +1436,6 @@ export default function Home() {
         >
           <div className="absolute w-[400px] h-[400px] bg-violet rounded-full blur-[200px] opacity-[0.04] top-[20%] -left-[100px]" />
           <div className="absolute w-[300px] h-[300px] bg-purple-500 rounded-full blur-[200px] opacity-[0.03] bottom-[20%] -right-[100px]" />
-
           <div className="max-w-[1200px] mx-auto relative z-[2]">
             <SectionHead
               tag="Projects"
@@ -1046,19 +1443,11 @@ export default function Home() {
               hl="Work"
               sub="Some of the projects I've built from the ground up."
             />
-
             <div className="space-y-10">
               {projectsData.map((p, i) => (
-                <ProjectCard
-                  key={p.title}
-                  project={p}
-                  idx={i}
-                  onTilt={handleTilt}
-                  onReset={resetTilt}
-                />
+                <ProjectCard key={p.title} project={p} idx={i} />
               ))}
             </div>
-
             <CtaButton />
           </div>
         </section>
@@ -1090,7 +1479,6 @@ export default function Home() {
           className="py-[100px] px-6 md:px-10 bg-[#0A0A0A] relative overflow-hidden"
         >
           <div className="absolute w-[500px] h-[500px] bg-violet rounded-full blur-[200px] opacity-[0.05] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-
           <div className="max-w-[700px] mx-auto text-center relative z-[2]">
             <SectionHead
               tag="Contact"
@@ -1099,7 +1487,6 @@ export default function Home() {
               sub="I'm currently open to new opportunities in Software Development and AI/ML roles. Whether you have a project idea, a job opportunity, or just want to say hi — my inbox is always open."
               center
             />
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-[50px]">
               {[
                 {
@@ -1124,7 +1511,6 @@ export default function Home() {
                 <ContactCardEl key={c.label} card={c} idx={i} />
               ))}
             </div>
-
             <div className="flex justify-center gap-4">
               {[
                 { href: info.github, emoji: "🐙" },
@@ -1184,9 +1570,7 @@ function SectionHead({ tag, title, hl, sub, center }) {
       className={`mb-[60px] ${center ? "text-center" : ""}`}
     >
       <p
-        className={`font-mono text-[0.8rem] text-violet mb-3 tracking-[2px] uppercase flex items-center gap-2 ${
-          center ? "justify-center" : ""
-        }`}
+        className={`font-mono text-[0.8rem] text-violet mb-3 tracking-[2px] uppercase flex items-center gap-2 ${center ? "justify-center" : ""}`}
       >
         <span className="text-gray-500">{"//"}</span>
         {tag}
@@ -1198,9 +1582,7 @@ function SectionHead({ tag, title, hl, sub, center }) {
         </span>
       </h2>
       <p
-        className={`text-base text-gray-400 ${
-          center ? "max-w-[600px] mx-auto" : "max-w-[600px]"
-        }`}
+        className={`text-base text-gray-400 ${center ? "max-w-[600px] mx-auto" : "max-w-[600px]"}`}
       >
         {sub}
       </p>
@@ -1287,8 +1669,8 @@ function ExpCard() {
   );
 }
 
-/* ══════ REDESIGNED PROJECT CARD — FULL WIDTH STACKED ══════ */
-function ProjectCard({ project: p, idx, onTilt, onReset }) {
+/* ══════ PROJECT CARD — NO TILT, WITH ANIMATIONS ══════ */
+function ProjectCard({ project: p, idx }) {
   const { ref, visible } = useInView();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -1304,112 +1686,46 @@ function ProjectCard({ project: p, idx, onTilt, onReset }) {
       }}
     >
       <div
-        onMouseMove={onTilt}
-        onMouseLeave={(e) => {
-          onReset(e);
-          setIsHovered(false);
-        }}
         onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className="relative rounded-[24px] p-[1px] transition-all duration-500"
         style={{
           background: isHovered
             ? `linear-gradient(135deg, ${p.accent}66, ${p.accent}22, ${p.accent}66)`
             : "rgba(255,255,255,0.06)",
-          transformStyle: "preserve-3d",
-          boxShadow: isHovered ? `0 30px 80px ${p.accent}20` : "none",
+          boxShadow: isHovered ? `0 30px 80px ${p.accent}15` : "none",
         }}
       >
         <div className="relative bg-[#0a0a0a] rounded-[23px] overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr]">
-            {/* LEFT — visual banner */}
+            {/* LEFT — Live animation */}
             <div
-              className={`relative h-[250px] lg:h-auto lg:min-h-[400px] bg-gradient-to-br ${p.gradient} overflow-hidden`}
+              className={`relative h-[320px] lg:h-auto lg:min-h-[440px] overflow-hidden`}
             >
-              {/* Grid overlay */}
+              {/* Dark bg with subtle gradient */}
+              <div className="absolute inset-0 bg-[#070710]" />
               <div
-                className="absolute inset-0 opacity-10"
+                className={`absolute inset-0 bg-gradient-to-br ${p.gradient} opacity-40`}
+              />
+
+              {/* Subtle grid */}
+              <div
+                className="absolute inset-0 opacity-[0.04]"
                 style={{
                   backgroundImage:
-                    "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-                  backgroundSize: "30px 30px",
+                    "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
+                  backgroundSize: "25px 25px",
                 }}
               />
 
-              {/* Floating circles */}
-              <motion.div
-                animate={{
-                  y: [0, -20, 0],
-                  x: [0, 10, 0],
-                  rotate: [0, 5, 0],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute top-[15%] right-[15%] w-[120px] h-[120px] rounded-full border border-white/10"
-                style={{ boxShadow: `0 0 40px ${p.accent}15` }}
-              />
-              <motion.div
-                animate={{
-                  y: [0, 15, 0],
-                  x: [0, -8, 0],
-                }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1,
-                }}
-                className="absolute bottom-[20%] left-[10%] w-[80px] h-[80px] rounded-full border border-white/5"
-              />
-
-              {/* Project icon */}
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl lg:text-8xl opacity-40"
-              >
-                {p.icon}
-              </motion.div>
-
-              {/* Project number */}
-              <div className="absolute top-6 left-6 font-mono text-[0.7rem] text-white/30 tracking-[4px] uppercase">
-                Project 0{idx + 1}
-              </div>
-
-              {/* Links */}
-              <div className="absolute bottom-6 left-6 flex gap-3">
-                {p.github && (
-                  <a
-                    href={p.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/80 text-[0.75rem] font-medium transition-all duration-300 hover:bg-violet/20 hover:border-violet/40 hover:text-white"
-                  >
-                    <span>🔗</span> GitHub
-                  </a>
-                )}
-                {p.live && (
-                  <a
-                    href={p.live}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl text-white/80 text-[0.75rem] font-medium transition-all duration-300 hover:bg-violet/20 hover:border-violet/40 hover:text-white"
-                  >
-                    <span>🌐</span> Live Demo
-                  </a>
-                )}
+              {/* Animation component */}
+              <div className="relative z-10 h-full">
+                {idx === 0 ? <DevDialogueAnimation /> : <MLPipelineAnimation />}
               </div>
             </div>
 
             {/* RIGHT — content */}
             <div className="p-8 lg:p-10 flex flex-col justify-center">
-              {/* Tagline */}
               <p
                 className="font-mono text-[0.7rem] tracking-[3px] uppercase mb-3"
                 style={{ color: p.accent }}
@@ -1417,7 +1733,7 @@ function ProjectCard({ project: p, idx, onTilt, onReset }) {
                 {p.tagline}
               </p>
 
-              <h3 className="font-grotesk text-[1.8rem] lg:text-[2rem] font-bold mb-4 flex items-center gap-3">
+              <h3 className="font-grotesk text-[1.8rem] lg:text-[2rem] font-bold mb-2 flex items-center gap-3">
                 {p.title}
                 <motion.span
                   animate={
@@ -1432,20 +1748,41 @@ function ProjectCard({ project: p, idx, onTilt, onReset }) {
                 </motion.span>
               </h3>
 
+              {/* Links */}
+              <div className="flex gap-3 mb-5">
+                {p.github && (
+                  <a
+                    href={p.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white/60 text-[0.7rem] font-medium transition-all duration-300 hover:bg-violet/10 hover:border-violet/30 hover:text-white"
+                  >
+                    🔗 GitHub
+                  </a>
+                )}
+                {p.live && (
+                  <a
+                    href={p.live}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white/60 text-[0.7rem] font-medium transition-all duration-300 hover:bg-violet/10 hover:border-violet/30 hover:text-white"
+                  >
+                    🌐 Live Demo
+                  </a>
+                )}
+              </div>
+
               <p className="text-[0.95rem] text-gray-400 leading-[1.8] mb-6">
                 {p.description}
               </p>
 
-              {/* Features */}
               <div className="space-y-3 mb-7">
                 {p.features.map((f, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, x: -15 }}
                     animate={visible ? { opacity: 1, x: 0 } : {}}
-                    transition={{
-                      delay: idx * 0.15 + i * 0.08 + 0.3,
-                    }}
+                    transition={{ delay: idx * 0.15 + i * 0.08 + 0.3 }}
                     className="flex items-start gap-3 group/feat"
                   >
                     <div
@@ -1464,15 +1801,11 @@ function ProjectCard({ project: p, idx, onTilt, onReset }) {
                 ))}
               </div>
 
-              {/* Tech */}
               <div className="flex flex-wrap gap-2 pt-6 border-t border-white/[0.06]">
                 {p.tech.map((t) => (
                   <span
                     key={t}
                     className="px-3.5 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg font-mono text-[0.72rem] text-gray-500 transition-all duration-300 hover:text-violet-light hover:-translate-y-0.5 cursor-default"
-                    style={{
-                      "--hover-border": `${p.accent}40`,
-                    }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.borderColor = `${p.accent}40`)
                     }
