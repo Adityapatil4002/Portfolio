@@ -1,28 +1,26 @@
 /** @type {import('tailwindcss').Config} */
-const config = {
+module.exports = {
   content: [
-    "./src/pages/**/*.{js,jsx,mdx}",
-    "./src/components/**/*.{js,jsx,mdx}",
-    "./src/app/**/*.{js,jsx,mdx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
-        violet: {
-          DEFAULT: "#8B5CF6",
-          light: "#A78BFA",
-          dark: "#7C3AED",
+        cyan: {
+          400: "#22D3EE",
+          500: "#06B6D4",
+          600: "#0891B2",
         },
       },
       fontFamily: {
         grotesk: ["var(--font-space-grotesk)", "sans-serif"],
+        playfair: ["var(--font-playfair)", "serif"],
         inter: ["var(--font-inter)", "sans-serif"],
         mono: ["var(--font-fira-code)", "monospace"],
-        playfair: ["var(--font-playfair)", "serif"],
       },
     },
   },
   plugins: [],
 };
-
-module.exports = config;
