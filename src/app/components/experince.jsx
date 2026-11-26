@@ -119,6 +119,29 @@ const Icons = {
       JS
     </span>
   ),
+  // ---- NEW ICONS ----
+  RestAPI: (
+    <span className="font-bold text-[9px] tracking-tight border border-current rounded-[3px] px-[3px] py-[1px] leading-none">
+      API
+    </span>
+  ),
+  Git: (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="6" cy="6" r="2.5" />
+      <circle cx="6" cy="18" r="2.5" />
+      <circle cx="18" cy="9" r="2.5" />
+      <path d="M6 8.5v7" />
+      <path d="M18 11.5c0 4-6 3-11 5.5" />
+    </svg>
+  ),
 };
 
 // ==========================================
@@ -128,26 +151,25 @@ const experienceData = [
   {
     id: 1,
     role: "Full Stack Developer Intern",
-    company: "MyJob Grow",
+    company: "Vista Xperts",
     type: "Internship",
-    date: "Feb 2024 – Apr 2024",
-    duration: "3 Months",
+    date: "Jan 2026 – Oct 2026",
+    duration: "10 Months",
     bullets: [
-      "Collaborated with a cross-functional development team to design and develop production-grade websites for business clients, contributing to both frontend and backend components.",
-      "Built responsive, pixel-perfect user interfaces using HTML, CSS, JavaScript, React, and Tailwind CSS — ensuring modern UI design and smooth UX across all devices.",
-      "Developed robust backend services using Node.js and Express.js — implementing RESTful APIs, server-side logic, authentication flows, and application workflows.",
-      "Managed and integrated databases including MongoDB, MySQL, and PostgreSQL for efficient data storage, retrieval, and application state management.",
-      "Gained end-to-end exposure to the full-stack development lifecycle — from frontend implementation and backend architecture to database integration and deployment.",
+      "Delivered 5+ client applications to production, turning varied business requirements into full-stack products now serving 500+ active users.",
+      "Designed and managed 5 MongoDB databases, with schemas modeled on each client's domain logic for a scalable, maintainable data layer.",
+      "Built 12+ RESTful APIs with Node.js and Express.js, powering core application features and frontend-backend communication.",
+      "Built 20+ responsive React pages and components and cut page load time by 50% through frontend performance optimization.",
+      "Integrated all 12+ API endpoints into the React frontend with consistent loading, error, and validation handling, ensuring reliable data flow across 5+ applications.",
+      "Maintained a Git-based workflow with feature branches and pull requests across 5+ client repositories, keeping releases organized and collaboration safe.",
     ],
     techStack: [
       { name: "React", icon: Icons.React },
       { name: "Node.js", icon: Icons.Node },
       { name: "Express.js", icon: Icons.Express },
       { name: "MongoDB", icon: Icons.MongoDB },
-      { name: "MySQL", icon: Icons.MySQL },
-      { name: "PostgreSQL", icon: Icons.PostgreSQL },
-      { name: "Tailwind CSS", icon: Icons.Tailwind },
-      { name: "JavaScript", icon: Icons.JavaScript },
+      { name: "REST APIs", icon: Icons.RestAPI },
+      { name: "Git", icon: Icons.Git },
     ],
   },
 ];
