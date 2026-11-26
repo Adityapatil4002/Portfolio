@@ -134,6 +134,7 @@ const Icons = {
 
 // ==========================================
 // DATA GENERATION (PURE SPEED, NO LAG)
+// Rolling year: Dec -> Nov (activity filled up to November)
 // ==========================================
 const GH_COLORS = [
   "bg-[#ebedf0]",
@@ -143,8 +144,6 @@ const GH_COLORS = [
   "bg-[#216e39]",
 ];
 const GH_MONTHS = [
-  "Oct",
-  "Nov",
   "Dec",
   "Jan",
   "Feb",
@@ -155,6 +154,8 @@ const GH_MONTHS = [
   "Jul",
   "Aug",
   "Sep",
+  "Oct",
+  "Nov",
 ];
 
 const LC_COLORS = [
@@ -164,35 +165,51 @@ const LC_COLORS = [
   "bg-[#3ec46d]",
   "bg-[#249e52]",
 ];
-const LC_MONTHS = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May"];
+const LC_MONTHS = [
+  "Dec",
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+];
 
 function seededRandom(seed) {
-  const x = Math.sin(seed++) * 10000;
+  const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
-function generateGitHubExactPattern() {
+// Maps a random value to a level 0-4 with a given chance of an empty (grey) day.
+// Everything else becomes a green level 1-4.
+function toLevel(r, emptyChance) {
+  if (r < emptyChance) return 0;
+  const scaled = (r - emptyChance) / (1 - emptyChance);
+  return Math.min(4, 1 + Math.floor(scaled * 4));
+}
+
+function generateGitHubPattern() {
   const data = [];
   for (let w = 0; w < 53; w++) {
     const week = [];
     for (let d = 0; d < 7; d++) {
-      const r = seededRandom(w * 10 + d);
-      let level = 0;
-      // Exactly matching screenshot: End of year (Aug/Sep) is very dense
-      if (w < 10)
-        level = r > 0.8 ? 1 : 0; // Oct/Nov Sparse
-      else if (w < 40)
-        level = r > 0.5 ? Math.floor(r * 4) : 0; // Middle
-      else level = r > 0.1 ? Math.floor(r * 5) : 2; // Aug/Sep VERY DENSE (guarantees greens)
-      week.push(Math.min(4, Math.max(0, level)));
+      const r = seededRandom(w * 10 + d + 1);
+      // ~25% grey gaps, rest green. Weekends are a bit quieter.
+      const emptyChance = d === 0 || d === 6 ? 0.4 : 0.2;
+      week.push(toLevel(r, emptyChance));
     }
     data.push(week);
   }
   return data;
 }
 
-function generateLeetCodeExactPattern() {
-  const monthWidths = [4, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5];
+function generateLeetCodePattern() {
+  const monthWidths = [4, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4, 5]; // 52 columns
   const data = [];
   let weekCounter = 0;
   for (let m = 0; m < 12; m++) {
@@ -201,11 +218,8 @@ function generateLeetCodeExactPattern() {
       const col = [];
       for (let d = 0; d < 7; d++) {
         const r = seededRandom(weekCounter * 20 + d + 50);
-        let level = 0;
-        if (m < 3)
-          level = r > 0.95 ? 1 : 0; // Oct, Nov, Dec empty
-        else level = Math.floor(r * 4) + 1; // Jan to Sep Solid Block
-        col.push(level);
+        // Mostly solid green with a few small gaps
+        col.push(toLevel(r, 0.1));
       }
       monthCols.push(col);
       weekCounter++;
@@ -224,7 +238,7 @@ const fadeUp = {
 // GITHUB COMPONENT (PURE HTML = FAST)
 // ==========================================
 function GitHubHeatmap() {
-  const data = useMemo(() => generateGitHubExactPattern(), []);
+  const data = useMemo(() => generateGitHubPattern(), []);
 
   return (
     <motion.div variants={fadeUp} className="w-full mb-10">
@@ -257,7 +271,7 @@ function GitHubHeatmap() {
           </div>
         </div>
 
-        {/* Grid Area - Hardcoded width ensures Aug/Sep never clip */}
+        {/* Grid Area - Hardcoded width ensures Oct/Nov never clip */}
         <div className="overflow-x-auto pb-4 scrollbar-hide pr-4">
           <div className="w-[780px]">
             {" "}
@@ -320,7 +334,7 @@ function GitHubHeatmap() {
 // LEETCODE COMPONENT (PURE HTML = FAST)
 // ==========================================
 function LeetCodeHeatmap() {
-  const monthData = useMemo(() => generateLeetCodeExactPattern(), []);
+  const monthData = useMemo(() => generateLeetCodePattern(), []);
   const badges = [
     { text: "6", colorCode: "bronze" },
     { text: "7", colorCode: "red" },
@@ -389,15 +403,14 @@ function LeetCodeHeatmap() {
                   ))}
                 </div>
 
-                {/* Badges / Months */}
-                <div className="flex flex-col items-center relative w-full h-8">
-                  {mIndex < 8 ? (
-                    <span className="text-xs text-slate-500 font-medium">
-                      {LC_MONTHS[mIndex]}
-                    </span>
-                  ) : (
+                {/* Month label + badges (last 4 months) */}
+                <div className="flex flex-col items-center gap-1.5 relative w-full h-12">
+                  <span className="text-xs text-slate-500 font-medium">
+                    {LC_MONTHS[mIndex]}
+                  </span>
+                  {mIndex >= 8 && (
                     <div
-                      className="absolute top-0 animate-bounce"
+                      className="animate-bounce"
                       style={{ animationDuration: "3s" }}
                     >
                       <Icons.HexBadge
